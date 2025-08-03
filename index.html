@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="jp">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RES25 JOY URL Generator</title>
+    <style>
+        html, body {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            background-color: #222;
+            font-family: Arial, sans-serif;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background-color: #333;
+            border-radius: 10px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+        }
+
+        h1 {
+            color: #fff;
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 2rem;
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+        }
+
+        label {
+            display: block;
+            color: #fff;
+            margin-bottom: 8px;
+            font-size: 1.1rem;
+            font-weight: bold;
+        }
+
+        .button-group {
+            margin-top: 30px;
+        }
+
+        button {
+            width: 100%;
+            padding: 15px 20px;
+            border: none;
+            border-radius: 5px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .rescue-btn {
+            background: linear-gradient(90deg, #38f, #f83);
+            color: #fff;
+        }
+
+        .rescue-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(51, 136, 255, 0.4);
+        }
+
+
+
+        .status {
+            margin-top: 10px;
+            padding: 10px;
+            border-radius: 5px;
+            color: #fff;
+            text-align: center;
+            display: none;
+        }
+
+        .status.success {
+            background-color: #28a745;
+        }
+
+        .status.error {
+            background-color: #dc3545;
+        }
+
+        /* 選択ボタンのスタイル */
+        .option-buttons {
+            display: grid;
+            grid-template-columns: repeat(8, 1fr);
+            gap: 8px;
+            margin-top: 10px;
+        }
+
+        .option-button {
+            padding: 10px 8px;
+            border: 2px solid #666;
+            border-radius: 5px;
+            background-color: #444;
+            color: #fff;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+        }
+
+        .option-button:hover {
+            border-color: #38f;
+            background-color: #555;
+        }
+
+        .option-button.selected {
+            border-color: #38f;
+            background: linear-gradient(90deg, #38f, #f83);
+            color: #fff;
+            font-weight: bold;
+        }
+
+        /* 有線・無線の色分け（選択時のみ） */
+        .option-button.wired.selected {
+            background: #0066cc;
+            border-color: #fff;
+            color: #fff;
+            font-weight: bold;
+        }
+
+        .option-button.wireless.selected {
+            background: #ff6600;
+            border-color: #fff;
+            color: #fff;
+            font-weight: bold;
+        }
+
+        .option-button.wired.selected:hover {
+            background: #0052a3;
+            border-color: #fff;
+        }
+
+        .option-button.wireless.selected:hover {
+            background: #cc5200;
+            border-color: #fff;
+        }
+
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .checkbox-group input[type="checkbox"] {
+            width: auto;
+            transform: scale(1.5);
+        }
+
+        .checkbox-group label {
+            margin-bottom: 0;
+        }
+
+        /* カメラアーム用の2列レイアウト */
+        .camera-arm-buttons {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 8px;
+            margin-top: 10px;
+        }
+
+        .camera-arm-button {
+            padding: 15px 20px;
+            border: 2px solid #666;
+            border-radius: 5px;
+            background-color: #444;
+            color: #fff;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+        }
+
+        .camera-arm-button:hover {
+            border-color: #38f;
+            background-color: #555;
+        }
+
+        .camera-arm-button.selected {
+            border-color: #38f;
+            background: linear-gradient(90deg, #38f, #f83);
+            color: #fff;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>RES25 コントローラー設定</h1>
+        
+        <form id="urlForm">
+            <div class="form-group">
+                <label>コントローラ1:</label>
+                <div class="option-buttons" id="controller1Buttons">
+                    <button type="button" class="option-button wireless" data-value="111">1号機無線<br>(111)</button>
+                    <button type="button" class="option-button wired" data-value="112">1号機有線<br>(112)</button>
+                    <button type="button" class="option-button wireless" data-value="113">2号機無線<br>(113)</button>
+                    <button type="button" class="option-button wired" data-value="114">2号機有線<br>(114)</button>
+                    <button type="button" class="option-button wireless" data-value="115">3号機無線<br>(115)</button>
+                    <button type="button" class="option-button wired" data-value="116">3号機有線<br>(116)</button>
+                    <button type="button" class="option-button wireless" data-value="117">4号機無線<br>(117)</button>
+                    <button type="button" class="option-button wired" data-value="118">4号機有線<br>(118)</button>
+                </div>
+                <input type="hidden" id="controller1" name="controller1" value="111">
+            </div>
+
+            <div class="form-group">
+                <label>コントローラ2:</label>
+                <div class="option-buttons" id="controller2Buttons">
+                    <button type="button" class="option-button wireless" data-value="111">1号機無線<br>(111)</button>
+                    <button type="button" class="option-button wired" data-value="112">1号機有線<br>(112)</button>
+                    <button type="button" class="option-button wireless" data-value="113">2号機無線<br>(113)</button>
+                    <button type="button" class="option-button wired" data-value="114">2号機有線<br>(114)</button>
+                    <button type="button" class="option-button wireless" data-value="115">3号機無線<br>(115)</button>
+                    <button type="button" class="option-button wired" data-value="116">3号機有線<br>(116)</button>
+                    <button type="button" class="option-button wireless" data-value="117">4号機無線<br>(117)</button>
+                    <button type="button" class="option-button wired" data-value="118">4号機有線<br>(118)</button>
+                </div>
+                <input type="hidden" id="controller2" name="controller2" value="118">
+            </div>
+
+            <div class="form-group">
+                <label>無線カメラ1:</label>
+                <div class="option-buttons" id="camera1Buttons">
+                    <button type="button" class="option-button wireless" data-value="111">1号機無線<br>(111)</button>
+                    <button type="button" class="option-button wired" data-value="112">1号機有線<br>(112)</button>
+                    <button type="button" class="option-button wireless" data-value="113">2号機無線<br>(113)</button>
+                    <button type="button" class="option-button wired" data-value="114">2号機有線<br>(114)</button>
+                    <button type="button" class="option-button wireless" data-value="115">3号機無線<br>(115)</button>
+                    <button type="button" class="option-button wired" data-value="116">3号機有線<br>(116)</button>
+                    <button type="button" class="option-button wireless" data-value="117">4号機無線<br>(117)</button>
+                    <button type="button" class="option-button wired" data-value="118">4号機有線<br>(118)</button>
+                </div>
+                <input type="hidden" id="camera1" name="camera1" value="111">
+            </div>
+
+            <div class="form-group">
+                <label>無線カメラ2:</label>
+                <div class="option-buttons" id="camera2Buttons">
+                    <button type="button" class="option-button wireless" data-value="111">1号機無線<br>(111)</button>
+                    <button type="button" class="option-button wired" data-value="112">1号機有線<br>(112)</button>
+                    <button type="button" class="option-button wireless" data-value="113">2号機無線<br>(113)</button>
+                    <button type="button" class="option-button wired" data-value="114">2号機有線<br>(114)</button>
+                    <button type="button" class="option-button wireless" data-value="115">3号機無線<br>(115)</button>
+                    <button type="button" class="option-button wired" data-value="116">3号機有線<br>(116)</button>
+                    <button type="button" class="option-button wireless" data-value="117">4号機無線<br>(117)</button>
+                    <button type="button" class="option-button wired" data-value="118">4号機有線<br>(118)</button>
+                </div>
+                <input type="hidden" id="camera2" name="camera2" value="118">
+            </div>
+
+            <div class="form-group">
+                <label>カメラアーム:</label>
+                <div class="camera-arm-buttons" id="cameraArmButtons">
+                    <button type="button" class="camera-arm-button" data-value="0">コントローラ1</button>
+                    <button type="button" class="camera-arm-button" data-value="1">コントローラ2</button>
+                </div>
+                <input type="hidden" id="cameraArm" name="cameraArm" value="0">
+            </div>
+
+            <div class="form-group">
+                <div class="checkbox-group">
+                    <input type="checkbox" id="debug" name="debug">
+                    <label for="debug">デバッグモード</label>
+                </div>
+            </div>
+
+            <div class="button-group">
+                <button type="button" class="rescue-btn" onclick="startRescue()">レスキュー準備完了!</button>
+            </div>
+        </form>
+
+
+
+        <div id="status" class="status"></div>
+    </div>
+
+    <script>
+        // 設定を保存するキー
+        const STORAGE_KEY = 'res25_joy_settings';
+
+        // ページ読み込み時に保存された設定を復元
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeButtons();
+            loadSettings();
+        });
+
+        // ボタンの初期化
+        function initializeButtons() {
+            // コントローラ1ボタン
+            document.querySelectorAll('#controller1Buttons .option-button').forEach(button => {
+                button.addEventListener('click', function() {
+                    selectButton('controller1Buttons', this);
+                    document.getElementById('controller1').value = this.dataset.value;
+                    saveSettings();
+                });
+            });
+
+            // コントローラ2ボタン
+            document.querySelectorAll('#controller2Buttons .option-button').forEach(button => {
+                button.addEventListener('click', function() {
+                    selectButton('controller2Buttons', this);
+                    document.getElementById('controller2').value = this.dataset.value;
+                    saveSettings();
+                });
+            });
+
+            // カメラ1ボタン
+            document.querySelectorAll('#camera1Buttons .option-button').forEach(button => {
+                button.addEventListener('click', function() {
+                    selectButton('camera1Buttons', this);
+                    document.getElementById('camera1').value = this.dataset.value;
+                    saveSettings();
+                });
+            });
+
+            // カメラ2ボタン
+            document.querySelectorAll('#camera2Buttons .option-button').forEach(button => {
+                button.addEventListener('click', function() {
+                    selectButton('camera2Buttons', this);
+                    document.getElementById('camera2').value = this.dataset.value;
+                    saveSettings();
+                });
+            });
+
+            // カメラアームボタン
+            document.querySelectorAll('#cameraArmButtons .camera-arm-button').forEach(button => {
+                button.addEventListener('click', function() {
+                    selectButton('cameraArmButtons', this);
+                    document.getElementById('cameraArm').value = this.dataset.value;
+                    saveSettings();
+                });
+            });
+
+            // デバッグチェックボックス
+            document.getElementById('debug').addEventListener('change', function() {
+                saveSettings();
+            });
+        }
+
+        // ボタン選択処理
+        function selectButton(containerId, selectedButton) {
+            const container = document.getElementById(containerId);
+            container.querySelectorAll('button').forEach(button => {
+                button.classList.remove('selected');
+            });
+            selectedButton.classList.add('selected');
+        }
+
+        // 設定を保存
+        function saveSettings() {
+            const settings = {
+                controller1: document.getElementById('controller1').value,
+                controller2: document.getElementById('controller2').value,
+                camera1: document.getElementById('camera1').value,
+                camera2: document.getElementById('camera2').value,
+                cameraArm: document.getElementById('cameraArm').value,
+                debug: document.getElementById('debug').checked
+            };
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
+        }
+
+        // 設定を読み込み
+        function loadSettings() {
+            const saved = localStorage.getItem(STORAGE_KEY);
+            if (saved) {
+                try {
+                    const settings = JSON.parse(saved);
+                    
+                    // 各設定値を設定
+                    document.getElementById('controller1').value = settings.controller1 || '111';
+                    document.getElementById('controller2').value = settings.controller2 || '118';
+                    document.getElementById('camera1').value = settings.camera1 || '111';
+                    document.getElementById('camera2').value = settings.camera2 || '118';
+                    document.getElementById('cameraArm').value = settings.cameraArm || '0';
+                    document.getElementById('debug').checked = settings.debug || false;
+
+                    // ボタンの選択状態を更新
+                    updateButtonStates(settings);
+                } catch (e) {
+                    console.error('設定の読み込みに失敗しました:', e);
+                }
+            } else {
+                // デフォルト選択
+                const defaultSettings = {
+                    controller1: '111',
+                    controller2: '118',
+                    camera1: '111',
+                    camera2: '118',
+                    cameraArm: '0',
+                    debug: false
+                };
+                updateButtonStates(defaultSettings);
+            }
+        }
+
+        // ボタンの選択状態を更新
+        function updateButtonStates(settings) {
+            // コントローラ1
+            const controller1Button = document.querySelector(`#controller1Buttons .option-button[data-value="${settings.controller1}"]`);
+            if (controller1Button) selectButton('controller1Buttons', controller1Button);
+
+            // コントローラ2
+            const controller2Button = document.querySelector(`#controller2Buttons .option-button[data-value="${settings.controller2}"]`);
+            if (controller2Button) selectButton('controller2Buttons', controller2Button);
+
+            // カメラ1
+            const camera1Button = document.querySelector(`#camera1Buttons .option-button[data-value="${settings.camera1}"]`);
+            if (camera1Button) selectButton('camera1Buttons', camera1Button);
+
+            // カメラ2
+            const camera2Button = document.querySelector(`#camera2Buttons .option-button[data-value="${settings.camera2}"]`);
+            if (camera2Button) selectButton('camera2Buttons', camera2Button);
+
+            // カメラアーム
+            const cameraArmButton = document.querySelector(`#cameraArmButtons .camera-arm-button[data-value="${settings.cameraArm}"]`);
+            if (cameraArmButton) selectButton('cameraArmButtons', cameraArmButton);
+        }
+
+        // レスキュー開始
+        function startRescue() {
+            const controller1 = document.getElementById('controller1').value;
+            const controller2 = document.getElementById('controller2').value;
+            const camera1 = document.getElementById('camera1').value;
+            const camera2 = document.getElementById('camera2').value;
+            const cameraArm = document.getElementById('cameraArm').value;
+            const debug = document.getElementById('debug').checked;
+
+            // パラメータを構築
+            const params = new URLSearchParams();
+            params.append('j1', controller1);
+            params.append('j2', controller2);
+            params.append('c1', camera1);
+            params.append('c2', camera2);
+            params.append('sp', cameraArm);
+            
+            if (debug) {
+                params.append('debug', '1');
+            }
+
+            // 設定を保存
+            saveSettings();
+
+            // index.htmlに遷移
+            const baseURL = window.location.origin + window.location.pathname.replace('url-generator.html', 'ui.html');
+            const fullURL = baseURL + '?' + params.toString();
+            window.location.href = fullURL;
+        }
+
+
+
+
+
+        // ステータスメッセージを表示
+        function showStatus(message, type) {
+            const status = document.getElementById('status');
+            status.textContent = message;
+            status.className = 'status ' + type;
+            status.style.display = 'block';
+            
+            setTimeout(() => {
+                status.style.display = 'none';
+            }, 3000);
+        }
+    </script>
+</body>
+</html> 

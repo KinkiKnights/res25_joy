@@ -1,0 +1,656 @@
+<!DOCTYPE html>
+<html lang="jp">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="./client.js"></script>
+    <title>RES25 JOY</title>
+    <script>
+    </script>
+    <style>
+        html, body {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            background-color: #222;
+            overflow-y: hidden;
+        }
+
+        header {
+            display: flex;
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100px;
+            font-size: 30px;
+            position: fixed;
+            top: 0;
+            left: 0;
+            z-index: 1000;
+        }
+
+        header > div {
+            display: block;
+            width: 50%;
+            height: 100px;
+            padding-top: 25px;
+
+            border: 2px solid #fff;
+            box-sizing: border-box;
+            border-collapse: collapse;
+
+            background-color: #666;
+            text-align: center;
+            color: #fff;
+        }
+        header[data-selected="R1"] #selectR1 {
+            background-color: #f83;
+            color: #fff;
+            overflow-y: hidden;
+        }
+
+        header[data-selected="R2"]  #selectR2 {
+            background-color: #38f;
+            color: #fff;
+        }
+
+        main {
+            display: flex;
+            width: 100%;
+            height: calc(100vh - 200px); /* header(100px) + footer(100px)を引く */
+            margin-top: 100px; /* headerの高さ分下げる */
+            margin-bottom: 100px; /* footerの高さ分下げる */
+        }
+
+        #side1 ,#side2 {
+            width: 200px;
+            background-color: #666;
+            border: 2px solid #fff;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            align-items: stretch;
+            padding: 0;
+        }
+
+        .status-item {
+            width: 100%;
+            padding: 12px 0 12px 12px;
+            text-align: left;
+            font-size: 1.1rem;
+            border-bottom: 1px solid #888;
+            box-sizing: border-box;
+            background: #444;
+            color: #bbb;
+            transition: background 0.2s, color 0.2s;
+        }
+        .status-item:last-child {
+            border-bottom: none;
+        }
+        .status-item[data-flag="t"] {
+            background: #38f;
+            color: #fff;
+            font-weight: bold;
+        }
+        .status-item[data-flag="f"] {
+            background: #444;
+            color: #bbb;
+        }
+
+        #camera {
+            flex: 1;
+            background-color: #000;
+            border: 2px solid #fff;
+            box-sizing: border-box;
+        }
+        #camera video {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            transform: scaleX(1) !important;
+        }
+
+        footer {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 100px;
+            background-color: #666;
+            border: 2px solid #fff;
+            box-sizing: border-box;
+            z-index: 1000;
+            display: flex;
+        }
+
+        #qr {
+            width: 30%;
+            background-color: #444;
+            border: 1px solid #fff;
+            box-sizing: border-box;
+            color: #fff;
+        }
+
+        #msg {
+            width: 40%;
+            background-color: #444;
+            border: 1px solid #fff;
+            padding: 10px;
+            box-sizing: border-box;
+
+            font-size: 8px;
+            color: #fff;
+            font-weight: bold;
+        }
+
+        #joy-container {
+            width: 30%;
+            display: flex;
+            flex-direction: column;
+            background-color: #444;
+            color: #fff;
+            border: 1px solid #fff;
+            box-sizing: border-box;
+        }
+
+        #joy1, #joy2 {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            padding: 5px;
+            border-bottom: 1px solid #fff;
+            box-sizing: border-box;
+        }
+
+        #joy2 {
+            border-bottom: none;
+        }
+
+        #joy1 input, #joy2 input {
+            width: 50px;
+            margin-right: 10px;
+        }
+    </style>
+</head>
+<body>
+    <header id="robot_select" data-selected="R1">
+        <div id="selectR1">1号機</div>
+        <div id="selectR2">4号機</div>
+    </header>
+    <main>
+        <div id="side1">
+            <div class="status-item" id="joynode_status" data-flag="f">JoyNode接続</div>
+            <div class="status-item" id="controller_status1" data-flag="f">webRTC接続</div>
+            <div class="status-item" id="controller_status" data-flag="f">有線カメラ接続</div>
+            <div class="status-item" id="pad_status" data-flag="f">コントローラ</div>
+            <div class="status-item" id="spmouse_status" data-flag="f">Joyスティック</div>
+            <div class="status-item" id="audio_status" data-flag="f">音声サーバー通信</div>
+            <div class="status-item" id="kkdriver_status" data-flag="f">kk_driver起動</div>
+            <div class="status-item" id="controller_status" data-flag="f">controller起動</div>
+        </div>
+        <div id="camera">
+            <video id="cameraCanvas" autoplay playsinline></video>
+        </div>
+        <div id="side2">
+            <div class="status-item" id="joynode_status2" data-flag="f">JoyNode接続</div>
+            <div class="status-item" id="controller_status2" data-flag="f">webRTC接続</div>
+            <div class="status-item" id="pad_status2" data-flag="f">コントローラ</div>
+            <div class="status-item" id="spmouse_status2" data-flag="f">Joyスティック</div>
+            <div class="status-item" id="audio_status2" data-flag="f">音声サーバー通信</div>
+            <div class="status-item" id="kkdriver_status2" data-flag="f">kk_driver起動</div>
+            <div class="status-item" id="controller_status2" data-flag="f">controller起動</div>
+        </div>
+    </main>
+    <footer>
+        <div id="qr"></div>
+        <div id="msg"></div>
+        <div id="joy-container">
+            <div id="joy1">
+                <select id="joy1_select" style="width:90%;font-size:1.1rem;"></select>
+            </div>
+            <div id="joy2">
+                <select id="joy2_select" style="width:90%;font-size:1.1rem;"></select>
+            </div>
+        </div>
+    </footer>
+    <!-- モーダルウィンドウ -->
+    <div id="modalOverlay" style="
+        position: fixed;
+        top: 0; left: 0; width: 100vw; height: 100vh;
+        background: rgba(0,0,0,0.7);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 2000;
+    ">
+        <div style="
+            background: #333;
+            padding: 40px 60px;
+            border-radius: 16px;
+            box-shadow: 0 4px 32px #000a;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        ">
+        <h2 style="color:#fff; margin-bottom: 24px;">操縦を開始しますか？</h2>
+        <button id="startCameraBtn" style="
+            font-size: 2rem;
+            padding: 16px 48px;
+            border-radius: 8px;
+            border: none;
+            background: linear-gradient(90deg, #38f, #f83);
+            color: #fff;
+            cursor: pointer;
+            box-shadow: 0 2px 8px #0007;
+            transition: background 0.2s;
+        ">レスキュー開始！！</button>
+        </div>
+    </div>
+    <script src="./qr-scanner.umd.min.js"></script>
+    <script>
+        // デフォルト値
+        const domain_config = {
+            camera: ["192.168.9.111", "192.168.9.118"],
+            joy: ["192.168.9.111", "192.168.9.118"],
+            camera_joy_idx: 0
+        };
+
+        // URLクエリからパラメータ取得
+        const urlParams = new URLSearchParams(window.location.search);
+
+        // c1, c2, j1, j2, sp の値を取得し、IPアドレスを設定
+        if (urlParams.has('c1')) {
+            const c1 = urlParams.get('c1');
+            domain_config.camera[0] = `192.168.9.${c1}`;
+        }
+        if (urlParams.has('c2')) {
+            const c2 = urlParams.get('c2');
+            domain_config.camera[1] = `192.168.9.${c2}`;
+        }
+        if (urlParams.has('j1')) {
+            const j1 = urlParams.get('j1');
+            domain_config.joy[0] = `192.168.9.${j1}`;
+        }
+        if (urlParams.has('j2')) {
+            const j2 = urlParams.get('j2');
+            domain_config.joy[1] = `192.168.9.${j2}`;
+        }
+        if (urlParams.has('sp')) {
+            const sp = parseInt(urlParams.get('sp'), 10);
+            if (!isNaN(sp) && (sp === 0 || sp === 1)) {
+                domain_config.camera_joy_idx = sp;
+            }
+        }
+        
+        let rtc_video = null;
+        /*=============================================
+        * Canvas描画更新
+        * drawSourceに登録した映像をフレームごとに表示します。        
+        *=============================================*/
+        const cameraCanvas = document.getElementById('cameraCanvas');
+        let draw_idx = 0;
+        const draw_source = [null, null, null];
+
+        // ソースがセットされている場合にのみ切り替え
+        function nextVideo() {
+            // draw_source.lengthが0の場合は何もしない
+            if (!Array.isArray(draw_source) || draw_source.length === 0) {
+                console.warn("draw_sourceが空です");
+                return;
+            }
+            for (let i = 0; i < draw_source.length; i++) {
+                const next_idx = (draw_idx + 1 + i) % draw_source.length;
+                console.log(next_idx);
+                if (draw_source[next_idx]) {
+                    draw_idx = next_idx;
+                    cameraCanvas.srcObject = draw_source[draw_idx];
+                    cameraCanvas.play();
+                    console.log(draw_idx, draw_source[draw_idx]);
+                    console.log(draw_idx);
+                    break;
+                }
+            }
+        }
+
+        /*=============================================
+        * 開始処理(有線カメラ初期化・QRコード読み取りワーカー起動)
+        *=============================================*/
+        const startCameraBtn = document.getElementById('startCameraBtn');
+        startCameraBtn.onclick = async () => {
+            // 全画面モードにする
+            // URLのクエリにdebugが含まれている場合は全画面化しない
+            if (!window.location.search.includes('debug')) {
+                const docElm = document.documentElement;
+                if (docElm.requestFullscreen) {
+                    docElm.requestFullscreen();
+                } else if (docElm.webkitRequestFullscreen) { // Safari
+                    docElm.webkitRequestFullscreen();
+                } else if (docElm.msRequestFullscreen) { // IE11
+                    docElm.msRequestFullscreen();
+                }
+            }
+            // 有線カメラ取得開始
+            let videoStream = null;
+            let videoElement = null;
+            try {
+                // 利用可能なカメラデバイスを取得
+                const devices = await navigator.mediaDevices.enumerateDevices();
+                const videoDevices = devices.filter(device => device.kind === 'videoinput');
+                
+                // USBが含まれているデバイスを優先的に選択
+                let selectedDeviceId = null;
+                const usbDevices = videoDevices.filter(device => 
+                    device.label && device.label.toUpperCase().includes('USB')
+                );
+                
+                if (usbDevices.length > 0) {
+                    // USBデバイスが見つかった場合、最初のUSBデバイスを選択
+                    selectedDeviceId = usbDevices[0].deviceId;
+                    console.log('USBカメラを選択:', usbDevices[0].label);
+                } else if (videoDevices.length > 0) {
+                    // USBデバイスが見つからない場合、最初のカメラを選択
+                    selectedDeviceId = videoDevices[0].deviceId;
+                    console.log('通常のカメラを選択:', videoDevices[0].label);
+                }
+                
+                // 選択したデバイスでカメラを開始
+                const constraints = selectedDeviceId ? {
+                    video: {
+                        deviceId: { exact: selectedDeviceId }
+                    }
+                } : {
+                    video: {}
+                };
+                
+                videoStream = await navigator.mediaDevices.getUserMedia(constraints);
+                videoElement = document.createElement('video');
+                draw_source[0] = videoStream;
+
+                // 使用中のカメラデバイス名を取得しUSB判定
+                let isUsbCamera = false;
+                if (videoStream && videoStream.getVideoTracks) {
+                    const track = videoStream.getVideoTracks()[0];
+                    const settings = track.getSettings();
+                    // deviceIdからデバイス名を特定
+                    const camDevice = devices.find(d => d.deviceId === settings.deviceId);
+                    if (camDevice && camDevice.label && camDevice.label.toUpperCase().includes('USB')) {
+                        isUsbCamera = true;
+                    }
+                    // カメラ切断検出
+                    track.onended = () => {
+                        const camStatus1 = document.getElementById('controller_status');
+                        if (camStatus1) camStatus1.setAttribute('data-flag', 'f');
+                    };
+                }
+
+                const camStatus1 = document.getElementById('controller_status');
+                if (camStatus1) camStatus1.setAttribute('data-flag', isUsbCamera ? 't' : 'f');
+            } catch (e) {
+                alert('カメラの利用が許可されませんでした');
+                outputDisplay("カメラの利用が許可されませんでした");
+                // 有線カメラ接続ステータスOFF
+                const camStatus1 = document.getElementById('controller_status');
+                if (camStatus1) camStatus1.setAttribute('data-flag', 'f');
+            }
+            
+
+            /*=============================================
+            * WebRTC接続
+            *=============================================*/
+            startWebRTC(domain_config.camera[0], 1);
+            startWebRTC(domain_config.camera[1], 2);
+
+            // モーダルを削除
+            const modal = document.getElementById('modalOverlay');
+            if (modal) modal.remove();
+        };
+
+        /*=============================================
+        * QRリーダ初期化
+        *=============================================*/
+        QrScanner.WORKER_PATH = './qr-scanner-worker.min.js';
+        // カメラ開始ボタンとcanvasの取得
+        const qrScanner = new QrScanner(
+            cameraCanvas,
+            result => {
+                console.log('decoded qr code:', result);
+                DisplayQRMsg(result.data);
+            },
+            {
+                preferredCamera: 'environment' // 背面カメラを指定（ミラーしない）
+            }
+        );
+        qrScanner.start();
+        /*=============================================
+        * QRメッセージ表示
+        *=============================================*/
+        // QRメッセージ表示用の関数
+        function DisplayQRMsg(text) {
+            const qrDiv = document.getElementById('qr');
+            // 現在の内容を取得
+            let lines = qrDiv.innerHTML.split("<br>");
+            // タイムスタンプ生成
+            const now = new Date();
+            const hh = String(now.getHours()).padStart(2, '0');
+            const mm = String(now.getMinutes()).padStart(2, '0');
+            const ss = String(now.getSeconds()).padStart(2, '0');
+            const timestamp = `${hh}:${mm}:${ss}`;
+            // 新しい行を作成
+            const newLine = `[${timestamp}] ${text}`;
+            // 先頭に追加
+            lines.unshift(newLine);
+            // 最大10行に制限
+            if (lines.length > 10) lines = lines.slice(0, 10);
+            // 内容を更新
+            qrDiv.innerHTML = lines.join('<br>');
+        }
+
+        /*=============================================
+        * コントローラ・スペースマウス選択
+        *=============================================*/
+        // Gamepadリスト管理
+        function updateGamepadSelects() {
+            const pads = navigator.getGamepads ? Array.from(navigator.getGamepads()).filter(p=>p) : [];
+            const joy1_select = document.getElementById('joy1_select');
+            const joy2_select = document.getElementById('joy2_select');
+            // 既存の選択値を保存
+            const prev1 = joy1_select.value;
+            const prev2 = joy2_select.value;
+            // 選択肢クリア
+            joy1_select.innerHTML = '';
+            joy2_select.innerHTML = '';
+            // None追加（常に先頭）
+            const noneOpt1 = document.createElement('option');
+            noneOpt1.value = 99;
+            noneOpt1.textContent = 'None';
+            joy1_select.appendChild(noneOpt1.cloneNode(true));
+            joy2_select.appendChild(noneOpt1);
+            // Padリスト生成
+            let foundPS3 = false, foundSpace = false;
+            pads.forEach((pad, idx) => {
+                const opt = document.createElement('option');
+                opt.value = idx;
+                opt.textContent = pad.id;
+                joy1_select.appendChild(opt.cloneNode(true));
+                joy2_select.appendChild(opt);
+                if (pad.id.includes('PS3')) foundPS3 = true;
+                if (pad.id.toLowerCase().includes('space')) foundSpace = true;
+            });
+            // 初期割り当て
+            if (pads.length) {
+                let ps3idx = pads.findIndex(p=>p.id.includes('PS3'));
+                let spidx = pads.findIndex(p=>p.id.toLowerCase().includes('space'));
+                if (ps3idx >= 0) joy1_select.value = ps3idx;
+                else if (joy1_select.querySelector(`option[value="${prev1}"]`)) joy1_select.value = prev1;
+                else joy1_select.value = pads[0] ? 0 : 99;
+                if (spidx >= 0) joy2_select.value = spidx;
+                else if (joy2_select.querySelector(`option[value="${prev2}"]`)) joy2_select.value = prev2;
+                else joy2_select.value = pads[1] ? 1 : 99;
+            } else {
+                joy1_select.value = 99;
+                joy2_select.value = 99;
+            }
+            // コントローラ・ジョイスティックの有効判定
+            const pad_status1 = document.getElementById('pad_status');
+            const pad_status2 = document.getElementById('pad_status2');
+            const spmouse_status1 = document.getElementById('spmouse_status');
+            const spmouse_status2 = document.getElementById('spmouse_status2');
+            // joy1: コントローラ（PS3を含むか）
+            let joy1idx = parseInt(joy1_select.value, 10);
+            if (!isNaN(joy1idx) && joy1idx !== 99 && pads[joy1idx] && pads[joy1idx].id.includes('PS3')) {
+                pad_status1.setAttribute('data-flag', 't');
+                pad_status2.setAttribute('data-flag', 't');
+            } else {
+                pad_status1.setAttribute('data-flag', 'f');
+                pad_status2.setAttribute('data-flag', 'f');
+            }
+            // joy2: ジョイスティック（spaceを含むか）
+            let joy2idx = parseInt(joy2_select.value, 10);
+            if (!isNaN(joy2idx) && joy2idx !== 99 && pads[joy2idx] && pads[joy2idx].id.toLowerCase().includes('space')) {
+                spmouse_status1.setAttribute('data-flag', 't');
+                spmouse_status2.setAttribute('data-flag', 't');
+            } else {
+                spmouse_status1.setAttribute('data-flag', 'f');
+                spmouse_status2.setAttribute('data-flag', 'f');
+            }
+        }
+
+        window.addEventListener('gamepadconnected', updateGamepadSelects);
+        window.addEventListener('gamepaddisconnected', updateGamepadSelects);
+        window.addEventListener('DOMContentLoaded', updateGamepadSelects);
+        // select変更時も反映
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('joy1_select').addEventListener('change', updateGamepadSelects);
+            document.getElementById('joy2_select').addEventListener('change', updateGamepadSelects);
+        });
+        /*=============================================
+        * ディスプレイ表示
+        *=============================================*/
+        function outputDisplay(txt) {
+            const display = document.getElementById('msg');
+            display.innerHTML = txt + "<br>" + display.innerHTML;
+        }
+
+        /*=============================================
+        * Joy送信
+        *=============================================*/
+        const uri_obj = new URL(window.location.href);
+        const domain = uri_obj.host;
+        let sendIdx = 0;
+        const status = {
+            ws: [null, null],
+            node_connect: [false,false],
+            trying: [false, false]
+        };
+        
+        function updateGamepad() {
+            const joy1_idx = document.getElementById('joy1_select').value;
+            const gps = navigator.getGamepads();
+            if (gps.length <= joy1_idx){
+                console.error("選択Joyが存在しません(updateGamepad())");
+                return;
+            }
+            const gp = gps[joy1_idx];
+            const pad_info = {
+                id: "unknown",
+                buttons: [],
+                axes: gp.axes,
+                type: 0
+            };
+            for (let i = 0; i < gp.buttons.length; i++) {
+                pad_info.buttons.push(gp.buttons[i].value);
+            }
+            if (!status.node_connect[sendIdx]) return;
+            status.ws[sendIdx].send(JSON.stringify(pad_info));
+            console.log(JSON.stringify(pad_info));
+        }
+
+        const prev_buttons = [0, 0];
+        function updateSpaceMouse() {
+            const joy2_idx = document.getElementById('joy2_select').value;
+            const gps = navigator.getGamepads();
+            if (gps.length <= joy2_idx){
+                console.error("選択Joyが存在しません(updateSpaceMouse())");
+                return;
+            }
+            const gp = gps[joy2_idx];
+            const pad_info = {
+                id: "unknown",
+                buttons: [],
+                axes: gp.axes,
+                type: 1
+            };
+            for (let i = 0; i < gp.buttons.length; i++) {
+                pad_info.buttons.push(gp.buttons[i].value);
+            }
+
+            if (pad_info.buttons[0] == 1 && prev_buttons[0] == 0) {
+                sendIdx = (sendIdx + 1) % 2;
+                document.querySelector("#robot_select").setAttribute('data-selected', 'R' + (sendIdx + 1));
+            } else if (pad_info.buttons[1] == 1 && prev_buttons[1] == 0) {
+                nextVideo();
+            }
+
+            prev_buttons[0] = pad_info.buttons[0];
+            prev_buttons[1] = pad_info.buttons[1]
+
+            if (!status.node_connect[0]) return;
+            status.ws[domain_config.camera_joy_idx].send(JSON.stringify(pad_info));
+            console.log(JSON.stringify(pad_info));
+
+        }
+        
+        /*=============================================
+        * WebSocket接続・初期化
+        *=============================================*/
+        function webSocketInit(idx) {
+            const domain = domain_config.joy[idx];
+            const ws = new WebSocket("ws://" + domain + ":8700/joys");
+            ws.onopen = () => {
+                status.node_connect[idx] = true;
+                status.ws[idx] = ws;
+                outputDisplay("Open ws://" + domain + ":8700/joy");
+            };
+            ws.onclose = () => {
+                status.node_connect[idx] = false;
+                outputDisplay("Close ws://" + domain + ":8700/joy");
+                status.trying[idx] = false;
+            }
+            ws.onerror = (err) => {
+                console.log("Websocket error!! ", err);
+                outputDisplay("Error ws://" + domain + ":8700/joy");
+            }
+            status.trying[idx] = true;
+        }
+
+        
+        const joynode_status1 = document.getElementById('joynode_status');
+        const joynode_status2 = document.getElementById('joynode_status2');
+        function retryWebsocket() {
+            // ノード接続状況
+            if (status.node_connect[0]) {
+                joynode_status1.setAttribute('data-flag', 't');
+            } else {
+                joynode_status1.setAttribute('data-flag', 'f');
+            }
+            if (status.node_connect[1]) {
+                joynode_status2.setAttribute('data-flag', 't');
+            } else {
+                joynode_status1.setAttribute('data-flag', 'f');
+            }
+            for (let idx = 0; idx < 2; idx++){
+                if (status.node_connect[idx] || status.trying[idx]) continue;
+                webSocketInit(idx);
+                outputDisplay("Retrying ws://" + domain_config.joy[idx] + ":8700/joy");
+            }
+        }
+        setInterval(updateGamepad, 50);
+        setInterval(updateSpaceMouse, 50);
+        setInterval(retryWebsocket, 5000);
+        webSocketInit(0);
+        webSocketInit(1);
+
+    </script>
+</body>
+</html>

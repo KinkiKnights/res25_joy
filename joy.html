@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script src="./client.js"></script>
     <title>RES25 JOY</title>
+    <!-- jsQRライブラリをローカルから読み込み -->
+    <script src="./jsQR.min.js"></script>
     <script>
     </script>
     <style>
@@ -247,7 +249,6 @@
         ">レスキュー開始！！</button>
         </div>
     </div>
-    <script src="./qr-scanner.umd.min.js"></script>
     <script>
         // デフォルト値
         const domain_config = {
@@ -314,7 +315,79 @@
         }
 
         /*=============================================
-        * 開始処理(有線カメラ初期化・QRコード読み取りワーカー起動)
+        * QRコード読み取り用Canvasとコンテキスト
+        *=============================================*/
+        const qrCanvas = document.createElement('canvas');
+        const qrContext = qrCanvas.getContext('2d');
+        let qrScanning = false;
+
+        /*=============================================
+        * Shift-JISデコード関数
+        *=============================================*/
+        function decodeShiftJIS(bytes) {
+            try {
+                // Shift-JISの文字コード表を使用してデコード
+                const decoder = new TextDecoder('shift_jis');
+                return decoder.decode(new Uint8Array(bytes));
+            } catch (e) {
+                console.error('Shift-JISデコードエラー:', e);
+                return null;
+            }
+        }
+
+        /*=============================================
+        * jsQRを使用したQRコード読み取り
+        *=============================================*/
+        function scanQRCode() {
+            if (qrScanning || !cameraCanvas.videoWidth || !cameraCanvas.videoHeight) {
+                return;
+            }
+
+            qrScanning = true;
+
+            // Canvasサイズを設定
+            qrCanvas.width = cameraCanvas.videoWidth;
+            qrCanvas.height = cameraCanvas.videoHeight;
+
+            // ビデオフレームをCanvasに描画
+            qrContext.drawImage(cameraCanvas, 0, 0, qrCanvas.width, qrCanvas.height);
+
+            // Canvasから画像データを取得
+            const imageData = qrContext.getImageData(0, 0, qrCanvas.width, qrCanvas.height);
+
+            // jsQRでQRコードを検出
+            const code = jsQR(imageData.data, imageData.width, imageData.height, {
+                inversionAttempts: "dontInvert",
+            });
+
+            if (code) {
+                console.log('QRコード検出:', code);
+                
+                let decodedText = code.data;
+                
+                // バイナリデータの場合、Shift-JISとしてデコードを試行
+                if (code.binaryData) {
+                    console.log('バイナリデータ検出:', code.binaryData);
+                    const shiftJISText = decodeShiftJIS(code.binaryData);
+                    if (shiftJISText) {
+                        decodedText = shiftJISText;
+                        console.log('Shift-JISデコード結果:', decodedText);
+                    }
+                }
+                
+                DisplayQRMsg(decodedText);
+                
+                // 連続読み取りを防ぐため少し待機
+                setTimeout(() => {
+                    qrScanning = false;
+                }, 1000);
+            } else {
+                qrScanning = false;
+            }
+        }
+
+        /*=============================================
+        * 開始処理(有線カメラ初期化・QRコード読み取り開始)
         *=============================================*/
         const startCameraBtn = document.getElementById('startCameraBtn');
         startCameraBtn.onclick = async () => {
@@ -401,27 +474,14 @@
             startWebRTC(domain_config.camera[0], 1);
             startWebRTC(domain_config.camera[1], 2);
 
+            // QRコード読み取り開始
+            setInterval(scanQRCode, 100); // 100ms間隔でQRコードをスキャン
+
             // モーダルを削除
             const modal = document.getElementById('modalOverlay');
             if (modal) modal.remove();
         };
 
-        /*=============================================
-        * QRリーダ初期化
-        *=============================================*/
-        QrScanner.WORKER_PATH = './qr-scanner-worker.min.js';
-        // カメラ開始ボタンとcanvasの取得
-        const qrScanner = new QrScanner(
-            cameraCanvas,
-            result => {
-                console.log('decoded qr code:', result);
-                DisplayQRMsg(result.data);
-            },
-            {
-                preferredCamera: 'environment' // 背面カメラを指定（ミラーしない）
-            }
-        );
-        qrScanner.start();
         /*=============================================
         * QRメッセージ表示
         *=============================================*/

@@ -1,0 +1,9 @@
+# Enhanced HTTP Server Dependencies
+# システム情報取得用（オプション）
+psutil>=5.9.0
+
+# ログ機能強化用（オプション）
+colorlog>=6.7.0
+
+# セキュリティ強化用（オプション）
+cryptography>=41.0.0 
